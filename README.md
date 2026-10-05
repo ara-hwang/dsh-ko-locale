@@ -180,6 +180,17 @@ Bump the version in `package.json`, then publish:
 npm publish            # add --otp=<code> when the account enforces 2FA
 ```
 
+The publish needs an interactive terminal. npm only reaches its browser-based
+authentication — and the prompt for a one-time password — when both stdin and
+stdout are a TTY; from a script or a CI pipe it fails with `EOTP` before either
+is offered, and a bypass-2FA access token is the way through instead.
+
+A freshly published version is not what the next install receives: pnpm's
+default supply-chain policy holds back releases younger than its minimum release
+age, so `dsh plugin add dsh-ko-locale` keeps resolving to the previous version
+until the new one has aged. Add
+`--config.minimumReleaseAge=0` to the command to install it immediately.
+
 `prepublishOnly` rebuilds `lib/` and runs the smoke test against the installed
 `LocaleRuntime`, so a pack that no longer matches the runtime cannot reach the
 registry. The tarball carries only `LICENSE`, `README.md`, `cordis.patch.yml`
