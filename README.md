@@ -52,12 +52,18 @@ pnpm install
 Finally reload the GUI (Ctrl+R). Later changes to this package need a full app
 restart, because the Host keeps the module generation it already loaded.
 
-A git or registry spec works in place of the `file:` path, and installs through
-the same `prepare` script this repository ships:
+A git spec works in place of the `file:` path. The built browser bundle is
+committed, so installation needs no build step and no network beyond the fetch:
 
 ```bash
-dsh plugin --profile desktop add github:ara-hwang/dsh-ko-locale
+cd ~/.dsh/profiles/desktop
+pnpm add github:ara-hwang/dsh-ko-locale
 ```
+
+`pnpm add` records the dependency but does not select the bundle, so
+`"dsh-ko-locale"` still has to be present in `dsh.profile.bundles`. The
+Settings → Plugins page and the `plugin_manager` tool perform both steps
+together, which is the friendlier route when the CLI is not on `PATH`.
 
 ### Uninstall
 
