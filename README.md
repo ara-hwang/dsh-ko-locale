@@ -20,10 +20,34 @@ settings, plugins, jobs, subagents, deliverables, schedules, voice input, …).
 
 ## Install
 
-A DSH language pack is an ordinary profile plugin: a dependency of the profile
-plus a bundle selection. Clone this repository anywhere, then edit the profile
-manifest at `~/.dsh/profiles/<profile>/package.json` (`desktop` for the desktop
-app, `web` for `dsh web`):
+The pack is published to npm, so one command installs the dependency *and*
+selects the bundle:
+
+```bash
+dsh plugin --profile desktop add dsh-ko-locale
+```
+
+Use the profile you actually run: `desktop` for the desktop app, `web` for
+`dsh web`. Then reload the GUI (Ctrl+R). Later changes to the package need a
+full app restart, because the Host keeps the module generation it already
+loaded.
+
+Without npm access, the same command takes the repository directly — the built
+browser bundle is committed, so there is no build step:
+
+```bash
+dsh plugin --profile desktop add github:ara-hwang/dsh-ko-locale
+```
+
+`dsh` ships with the desktop application at
+`resources/runtime/cli/bin/dsh.cmd`. The Settings → Plugins page performs the
+same two steps, which is the friendlier route when that directory is not on
+`PATH`. A failed install restores `package.json` and the lockfile by itself.
+
+### Installing by hand
+
+To develop against a checkout instead of a published version, point the profile
+manifest at it. Edit `~/.dsh/profiles/<profile>/package.json`:
 
 ```json
 {
@@ -42,28 +66,10 @@ app, `web` for `dsh web`):
 }
 ```
 
-Then install the dependency so the profile's `node_modules` resolves it:
-
-```bash
-cd ~/.dsh/profiles/desktop
-pnpm install
-```
-
-Finally reload the GUI (Ctrl+R). Later changes to this package need a full app
-restart, because the Host keeps the module generation it already loaded.
-
-A git spec works in place of the `file:` path. The built browser bundle is
-committed, so installation needs no build step and no network beyond the fetch:
-
-```bash
-cd ~/.dsh/profiles/desktop
-pnpm add github:ara-hwang/dsh-ko-locale
-```
-
-`pnpm add` records the dependency but does not select the bundle, so
-`"dsh-ko-locale"` still has to be present in `dsh.profile.bundles`. The
-Settings → Plugins page and the `plugin_manager` tool perform both steps
-together, which is the friendlier route when the CLI is not on `PATH`.
+then run `pnpm install` in the profile directory. A `file:` dependency is
+hard-linked into the profile, so rebuilding here replaces the installed bundle
+in place — the running app then picks the new artifact up on its next
+recomposition, or on restart.
 
 ### Uninstall
 
@@ -195,6 +201,26 @@ Every path above defaults to a scratch directory beside this repository
 (`../_work`), which is not tracked; each tool also takes explicit arguments.
 Nothing outside `data/` and the generated `lib/` is ever written inside the
 repository.
+
+## Releasing
+
+Bump the version in `package.json`, then publish:
+
+```bash
+npm publish            # add --otp=<code> when the account enforces 2FA
+```
+
+`prepublishOnly` rebuilds `lib/` and runs the smoke test against the installed
+`LocaleRuntime`, so a pack that no longer matches the runtime cannot reach the
+registry. The tarball carries only `LICENSE`, `README.md`, `cordis.patch.yml`
+and the generated `lib/` files — seven files, ~84 kB packed — because that is
+everything a profile needs to resolve and serve the plugin; `src/`, `data/` and
+`tools/` stay in the repository.
+
+Committing `lib/` is deliberate. A `file:` dependency is not run through
+`prepare`, and DSH's plugin manager runs pnpm in a scrubbed environment where a
+failing install script would fail the whole operation, so the built bundle ships
+in the repository and in the tarball instead of being produced at install time.
 
 ## Known limitations
 
