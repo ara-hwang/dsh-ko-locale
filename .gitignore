@@ -1,0 +1,20 @@
+# The regeneration pipeline writes its scratch output to a directory beside the
+# repository (../_work by default), but keep the name ignored in case it is ever
+# pointed inside the checkout.
+_work/
+work/
+
+# Node
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+*.swp

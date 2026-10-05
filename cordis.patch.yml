@@ -1,0 +1,14 @@
+# dsh-ko-locale — bundle layer
+#
+# Applied automatically when this package is listed in the profile's
+# `dsh.profile.bundles` (see README.md). A manual install copies this row into
+# the profile's ~/.dsh/profiles/<profile>/cordis.patch.yml instead.
+#
+# The HOST row is the only loader entry. The browser half is discovered from
+# `package.json#dsh.client` and served at /plugins/dsh-ko-locale/client.js, so
+# never add a second `dsh-ko-locale/client` row here — that would execute
+# browser code in the Host process.
+
+- insert:
+    - id: ko-locale
+      name: dsh-ko-locale

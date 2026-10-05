@@ -1,0 +1,66 @@
+{
+  "name": "dsh-ko-locale",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Korean (ko) language pack for the DeepSeek Harness desktop and web GUI: registers the ko locale catalog entry and serves Korean copy for every built-in client dictionary.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./dictionaries": {
+      "default": "./lib/dictionaries.json"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/dictionaries.json",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "test": "node tools/smoke-test.mjs",
+    "extract": "node tools/extract-dictionaries.mjs",
+    "verify": "node tools/verify-translations.mjs",
+    "prepublishOnly": "node tools/build.mjs && node tools/smoke-test.mjs"
+  },
+  "license": "MIT",
+  "author": "ara-hwang",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ara-hwang/dsh-ko-locale.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ara-hwang/dsh-ko-locale/issues"
+  },
+  "homepage": "https://github.com/ara-hwang/dsh-ko-locale#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-plugin",
+    "dsh-locale",
+    "locale",
+    "korean",
+    "i18n",
+    "localization"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  }
+}

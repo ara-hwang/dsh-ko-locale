@@ -1,0 +1,31 @@
+{
+ "_comment": [
+  "Reviewed corrections to the machine-translated pass, applied by tools/assemble.mjs",
+  "after the chunks are merged so they survive a regeneration.",
+  "",
+  "Two rules decide what belongs here:",
+  "  1. Where the shipped Chinese dictionary localizes a value, the Korean pack does too.",
+  "  2. Where it keeps the English value (product names, protocol names, wire values,",
+  "     command names, units, placeholders), the Korean pack keeps it as well.",
+  "tools/audit-untranslated.mjs lists every candidate; everything not listed here is",
+  "intentionally English."
+ ],
+ "trajectory": {
+  "kind.assistant": "어시스턴트",
+  "kind.compacted": "압축됨",
+  "kind.context": "컨텍스트",
+  "kind.subtool": "하위 도구",
+  "kind.system": "시스템",
+  "kind.tool": "도구",
+  "kind.user": "사용자"
+ },
+ "conversation": {
+  "tool.title.bash": "명령 실행",
+  "tool.title.pwsh": "명령 실행",
+  "tool.title.glob": "파일 찾기",
+  "tool.title.grep": "파일 내용 검색"
+ },
+ "settings.shell": {
+  "title": "터미널"
+ }
+}

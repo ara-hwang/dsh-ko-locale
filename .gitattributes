@@ -1,0 +1,7 @@
+# Normalize line endings so the shell scripts, JSON data and generated bundle
+# stay byte-stable across platforms.
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+*.woff2 binary
