@@ -1,6 +1,6 @@
 {
   "name": "dsh-ko-locale",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Korean (ko) language pack for the DeepSeek Harness desktop and web GUI: registers the ko locale catalog entry and serves Korean copy for every built-in client dictionary.",
   "type": "module",
   "main": "lib/index.js",
