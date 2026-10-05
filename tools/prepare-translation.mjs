@@ -54,7 +54,10 @@ bins.forEach((bin, index) => {
   fs.writeFileSync(file, `${JSON.stringify(payload, null, 1)}\n`, 'utf8')
   manifest.push({
     id,
-    file,
+    // Recorded relative to the chunk directory, never absolute: the scratch
+    // tree is routinely moved (it lives outside the repository) and an absolute
+    // path here would silently pin every later step to one machine's layout.
+    file: path.basename(file),
     groups: bin.groups.length,
     keys: bin.keys,
     namespaces: bin.groups.map((group) => group.ns),

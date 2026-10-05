@@ -53,8 +53,24 @@ let ok = 0
 let suspects = 0
 const problems = []
 
+/**
+ * Locate a manifest's chunk file. The manifest names chunks relative to
+ * `chunksDir`, which keeps a relocated scratch tree working; an older manifest
+ * that recorded an absolute path is reduced to its basename for the same reason.
+ * @param chunk - a `_manifest.json` entry.
+ * @returns the chunk's path.
+ */
+function chunkPath(chunk) {
+  const file = path.join(chunksDir, path.basename(chunk.file))
+  if (!fs.existsSync(file)) {
+    console.error(`chunk ${chunk.id}: source not found at ${file}`)
+    process.exit(2)
+  }
+  return file
+}
+
 for (const chunk of manifest) {
-  const source = JSON.parse(fs.readFileSync(chunk.file, 'utf8'))
+  const source = JSON.parse(fs.readFileSync(chunkPath(chunk), 'utf8'))
 
   let chunkMissing = 0
   let chunkSuspects = 0
@@ -91,7 +107,7 @@ for (const chunk of manifest) {
 /* Keys that no source chunk asks for: a typo or a stale translation. */
 const wanted = new Set()
 for (const chunk of manifest) {
-  for (const group of JSON.parse(fs.readFileSync(chunk.file, 'utf8'))) {
+  for (const group of JSON.parse(fs.readFileSync(chunkPath(chunk), 'utf8'))) {
     for (const key of Object.keys(group.en)) wanted.add(`${group.ns}\u0000${key}`)
   }
 }
