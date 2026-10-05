@@ -11,6 +11,10 @@
  * the addLanguage/publishCatalog interaction, fallback to English, and disposal
  * — instead of a hand-written stand-in.
  *
+ * It needs the DSH application installed, so it cannot run in CI. The shipped
+ * dictionaries and the bundle they are inlined into are checked portably by
+ * `tools/check-data.mjs`, which `npm test` runs first.
+ *
  * Usage: node tools/smoke-test.mjs [path/to/dsh-client-locale/lib/client.js]
  *   Without a path, the bundle is read straight out of the installed
  *   application's app.asar (see tools/asar.mjs for the install location).
@@ -19,6 +23,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { DEFAULT_ASAR, readAsarFile } from './asar.mjs'
+import { evaluateBundle, loadPack } from './check-data.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const pkgRoot = path.resolve(here, '..')
@@ -61,40 +66,9 @@ function check(label, actual, expected) {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${ok ? '' : `\n        expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`}`)
 }
 
-/**
- * Execute a module-loader bundle as a classic script, exactly like the app's
- * combo loader does, and return the factory's exports.
- * @param source - the bundle's text.
- * @param label - name used in error messages.
- * @param makeRequire - builds the `require` the factory receives.
- * @returns `{ id, exports }`.
- */
-function evaluateBundle(source, label, makeRequire) {
-  const previous = globalThis.window
-  let captured
-  globalThis.window = {
-    __ModuleLoader__: {
-      load(entry) {
-        captured = entry
-      },
-    },
-  }
-  try {
-    new Function(source)()
-  } finally {
-    globalThis.window = previous
-  }
-  if (captured === undefined) throw new Error(`${label} did not register a module`)
-  return { id: captured.id, exports: captured.factory(makeRequire) }
-}
-
 /** Load this pack's built browser bundle. */
 function loadKoreanPack() {
-  const file = path.join(pkgRoot, 'lib', 'client.js')
-  if (!fs.existsSync(file)) throw new Error(`build the pack first: ${file} is missing`)
-  return evaluateBundle(fs.readFileSync(file, 'utf8'), file, (id) => {
-    throw new Error(`the pack must not import anything, but requested "${id}"`)
-  })
+  return loadPack(pkgRoot)
 }
 
 /** Load the real locale bundle; its React imports are never rendered here. */
@@ -231,42 +205,8 @@ setMachineLanguage(['en-US', 'en'])
   })(), 'Hello')
 }
 
-/* ── Scenario D: the shipped pack's shape ───────────────────────────────── */
-console.log('\nScenario D — shipped pack data')
-{
-  const pack = loadKoreanPack().exports
-  const dictionaries = pack.DICTIONARIES
-  const namespaces = Object.keys(dictionaries)
-  const keys = namespaces.reduce((sum, ns) => sum + Object.keys(dictionaries[ns]).length, 0)
-  check('exposes the Korean locale id', pack.KOREAN_LOCALE_ID, 'ko')
-  check('carries more than one namespace', namespaces.length > 1, true)
-  check('carries more than 1000 strings', keys > 1000, true)
-  const empty = namespaces.filter((ns) => Object.keys(dictionaries[ns]).length === 0)
-  check('no empty namespace', empty.length, 0)
-  const blank = []
-  for (const ns of namespaces) {
-    for (const [key, value] of Object.entries(dictionaries[ns])) {
-      if (typeof value !== 'string' || value.trim() === '') blank.push(`${ns}.${key}`)
-    }
-  }
-  check('no blank value', blank.length, 0)
-
-  // Placeholder parity: every {token} in the English source must survive.
-  const en = JSON.parse(fs.readFileSync(path.join(pkgRoot, 'data', 'en.json'), 'utf8'))
-  const placeholders = (text) => (text.match(/\{(\w+)\}/g) ?? []).slice().sort().join(',')
-  const drift = []
-  for (const ns of Object.keys(en)) {
-    for (const [key, english] of Object.entries(en[ns])) {
-      const korean = dictionaries[ns]?.[key]
-      if (typeof korean !== 'string') continue
-      if (placeholders(english) !== placeholders(korean)) drift.push(`${ns}.${key}`)
-    }
-  }
-  check('placeholder tokens match the English source', drift.length, 0)
-  if (drift.length) for (const key of drift.slice(0, 15)) console.log(`        ${key}`)
-
-  console.log(`\npack: ${namespaces.length} namespaces, ${keys} Korean strings`)
-}
+/* ── Data integrity is owned by tools/check-data.mjs ────────────────────── */
+console.log('\nShipped pack data: checked by tools/check-data.mjs (portable, runs in CI)')
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : `${failures} FAILED`} — ${checks - failures}/${checks} checks`)
 process.exit(failures === 0 ? 0 : 1)

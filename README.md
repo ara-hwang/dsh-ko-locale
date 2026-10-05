@@ -174,30 +174,42 @@ ships.
 
 ## Releasing
 
-Bump the version in `package.json`, then publish:
+Pushing a `v*` tag publishes through GitHub Actions with OIDC trusted
+publishing, so no npm token is stored anywhere:
 
 ```bash
-npm publish            # add --otp=<code> when the account enforces 2FA
+npm version patch --no-git-tag-version   # or edit package.json
+git commit -am "Release x.y.z"
+git tag -a vx.y.z -m "dsh-ko-locale x.y.z"
+git push && git push --tags
 ```
 
-The publish needs an interactive terminal. npm only reaches its browser-based
-authentication — and the prompt for a one-time password — when both stdin and
-stdout are a TTY; from a script or a CI pipe it fails with `EOTP` before either
-is offered, and a bypass-2FA access token is the way through instead.
+`.github/workflows/publish.yml` checks that the tag matches `package.json`,
+rebuilds the bundle, fails if the committed `lib/` was stale, checks the
+dictionaries portably, and publishes. The publish needs a trusted publisher
+configured on npmjs.com — see [`AGENTS.md`](AGENTS.md) for the exact values and
+the two fields npm does not verify at configuration time.
+
+To publish locally instead, `npm publish` works from an interactive terminal;
+it needs 2FA, which means either a one-time password or the browser flow that
+appears only when stdin and stdout are both a TTY. From a script or a CI pipe it
+fails with `EOTP` before either is offered.
 
 A freshly published version is not what the next install receives: pnpm's
 default supply-chain policy holds back releases younger than its minimum release
 age, so `dsh plugin add dsh-ko-locale` keeps resolving to the previous version
-until the new one has aged. Add
-`--config.minimumReleaseAge=0` to the command to install it immediately.
+until the new one has aged. Add `--config.minimumReleaseAge=0` to the command to
+install it immediately.
 
-`prepublishOnly` rebuilds `lib/` and runs the smoke test against the installed
-`LocaleRuntime`, so a pack that no longer matches the runtime cannot reach the
-registry. The tarball carries only `LICENSE`, `README.md`, `cordis.patch.yml`
-and the generated `lib/` files — seven files, ~84 kB packed — because that is
-everything a profile needs to resolve and serve the plugin; `src/`, `data/`,
-`docs/` and `tools/` stay in the repository. Those generated files are committed
-rather than built at install time, for the reason [`AGENTS.md`](AGENTS.md) gives.
+`prepublishOnly` rebuilds `lib/` and runs `npm run check` — the portable
+dictionary check, which is the strongest gate available without the DSH
+application. `npm test` additionally drives the real `LocaleRuntime`. The
+tarball carries only `LICENSE`, `README.md`, `cordis.patch.yml` and the
+generated `lib/` files — seven files, ~84 kB packed — because that is everything
+a profile needs to resolve and serve the plugin; `src/`, `data/`, `docs/`,
+`tools/` and the workflows stay in the repository. Those generated files are
+committed rather than built at install time, for the reason
+[`AGENTS.md`](AGENTS.md) gives.
 
 ## Known limitations
 

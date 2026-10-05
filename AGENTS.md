@@ -40,9 +40,32 @@ needs no chunk file and survives regeneration.
 
 - `npm test` drives the real `LocaleRuntime` out of the installed DSH
   application's `app.asar`, so it needs that app present; `DSH_ASAR` points it
-  at a different install.
+  at a different install. `npm run check` is the half that needs nothing
+  installed, and is what CI and `prepublishOnly` run.
 - The regeneration pipeline writes to a scratch tree beside this repository
   (`../_work`) and never inside it.
 - A `file:` install is hard-linked into the profile, so building here replaces
   the installed bundle in place. The running app serves the new artifact after
   its next recomposition, and a restart is the reliable way to force one.
+
+## Publishing
+
+Pushing a `v*` tag runs `.github/workflows/publish.yml`, which publishes over
+OIDC trusted publishing. The npm side of that trust lives at
+npmjs.com → the package → Settings → Trusted publishing, and must read:
+
+| Field | Value |
+|---|---|
+| Publisher | GitHub Actions |
+| Organization or user | `ara-hwang` |
+| Repository | `dsh-ko-locale` |
+| Workflow filename | `publish.yml` (the filename only, at `.github/workflows/`) |
+| Environment name | leave empty |
+| Allowed actions | **Allow npm publish** — without it only `npm stage publish` is granted |
+
+Nothing verifies those values when they are saved; a mismatch surfaces as
+`ENEEDAUTH` on the first tag push. The other precondition npm does not check is
+`repository.url` in `package.json`, which must match the GitHub repository
+exactly. `permissions: id-token: write` in the workflow is what mints the OIDC
+token, and setting `NODE_AUTH_TOKEN` would override it with a token instead.
+

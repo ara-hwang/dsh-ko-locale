@@ -26,14 +26,15 @@
   ],
   "scripts": {
     "build": "node tools/build.mjs",
-    "test": "node tools/smoke-test.mjs",
+    "check": "node tools/check-data.mjs",
+    "test": "node tools/check-data.mjs && node tools/smoke-test.mjs",
     "extract": "node tools/extract-dictionaries.mjs",
     "chunk": "node tools/prepare-translation.mjs",
     "verify": "node tools/verify-translations.mjs",
     "assemble": "node tools/assemble.mjs",
     "audit": "node tools/audit-untranslated.mjs",
     "probe": "node tools/probe-bundle-route.mjs",
-    "prepublishOnly": "node tools/build.mjs && node tools/smoke-test.mjs"
+    "prepublishOnly": "node tools/build.mjs && node tools/check-data.mjs"
   },
   "license": "MIT",
   "author": "ara-hwang",
