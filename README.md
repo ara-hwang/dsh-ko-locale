@@ -1,5 +1,7 @@
 # dsh-ko-locale
 
+<img width="1782" height="1237" alt="image" src="https://github.com/user-attachments/assets/e2c50632-3b6d-4625-833c-7aee09ffaa26" />
+
 Korean (한국어) language pack for the DeepSeek Harness desktop and web GUI.
 
 Adds `ko` to the locale catalog and serves Korean copy for **every namespace the
