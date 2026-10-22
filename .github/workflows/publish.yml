@@ -14,6 +14,11 @@
 # The runtime smoke test cannot run here: it reads the LocaleRuntime out of an
 # installed DSH application, which no runner has. `npm run check` is the
 # portable gate instead — see tools/check-data.mjs.
+#
+# A tag push also leaves a GitHub Release behind, with notes GitHub generates
+# from the commits. npm remains the distribution channel; the release page is the
+# human-readable record. An existing release is never overwritten, so notes a
+# maintainer edited by hand survive a workflow re-run.
 
 name: Publish to npm
 
@@ -23,7 +28,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write # the GitHub Release created below
   id-token: write # the OIDC token npm exchanges for a short-lived publish token
 
 jobs:
@@ -66,3 +71,17 @@ jobs:
       # repository.
       - name: Publish
         run: npm publish
+
+      # Runs after the publish on purpose: the npm release is already out, so a
+      # failure here costs a release page, not a version. The existence check
+      # makes a re-run idempotent and keeps hand-edited notes.
+      - name: Create the GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            echo "release $GITHUB_REF_NAME already exists; leaving its notes alone"
+          else
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+          fi

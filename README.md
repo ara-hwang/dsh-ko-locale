@@ -199,7 +199,9 @@ git push && git push --tags
 
 `.github/workflows/publish.yml` checks that the tag matches `package.json`,
 rebuilds the bundle, fails if the committed `lib/` was stale, checks the
-dictionaries portably, and publishes. The publish needs a trusted publisher
+dictionaries portably, publishes, and then creates a GitHub Release whose notes
+GitHub generates from the commits. An existing release is left alone, so notes a
+maintainer edited by hand survive a re-run. The publish needs a trusted publisher
 configured on npmjs.com — see [`AGENTS.md`](AGENTS.md) for the exact values and
 the two fields npm does not verify at configuration time.
 
