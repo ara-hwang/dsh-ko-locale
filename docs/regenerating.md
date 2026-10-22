@@ -47,9 +47,11 @@ namespace, covering exactly the added and changed keys `drift` named:
 
 Use the extracted call site to judge the role (label, button, error, tooltip, aria
 label), the Chinese dictionary as a semantic anchor, and
-[`data/glossary.ko.json`](../data/glossary.ko.json) for terminology. Keep every
-`{token}` verbatim; keep product names, commands, paths, units and acronyms in
-English; keep the source's trailing period and surrounding spaces.
+[`data/glossary.ko.json`](../data/glossary.ko.json) for terminology. Write in
+합니다체: declaratives end `…합니다`/`…입니다`, requests `…하십시오`/`…해 주십시오`,
+confirmations `…하시겠습니까?`. Keep every `{token}` verbatim; keep product names,
+commands, paths, units and acronyms in English; keep the source's trailing period
+and surrounding spaces.
 **Done when** every added and reworded key has a Korean value.
 
 ## 4. Splice, verify, assemble

@@ -20,6 +20,9 @@ records why.
 - **Per-key fallback.** Any string the pack does not carry (for example copy
   added by a DSH update, or a plugin you installed afterwards) falls back to the
   shipped English dictionary rather than showing a raw key name.
+- **Formal register throughout.** Every translated sentence uses 합니다체 —
+  `…합니다`, `…입니다`, `…하십시오`, `…하시겠습니까?` — so the GUI reads as one voice
+  rather than a mix of styles.
 
 ## Install
 
