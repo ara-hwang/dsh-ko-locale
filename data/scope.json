@@ -1,0 +1,15 @@
+{
+ "_comment": [
+  "Scope exceptions for the shipped pack. tools/check-data.mjs skips these entries when it",
+  "requires Korean, tools/drift.mjs ignores them when it measures drift, and tools/assemble.mjs",
+  "still writes the English source so the namespace list stays faithful to the build.",
+  "",
+  "An exemption is a decision recorded with its reason — never a place to hide missing work.",
+  "The check fails when an exemption names a namespace or key the build no longer ships, so",
+  "stale entries cannot accumulate."
+ ],
+ "excludedNamespaces": {
+  "deepseek-model-label-1017": "모델 릴리스마다 숫자가 바뀌는 스탬프 네임스페이스. 값이 배지 숫자 '1017' 하나뿐이라 번역 대상이 아니고, 다음 모델 릴리스에서는 이 네임스페이스 자체가 사라진다."
+ },
+ "excludedKeys": {}
+}

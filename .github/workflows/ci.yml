@@ -33,5 +33,5 @@ jobs:
       - name: Fail when the committed bundle is stale
         run: git diff --exit-code -- lib/
 
-      - name: Check the shipped dictionaries
+      - name: Check the shipped dictionaries and glossary
         run: npm run check

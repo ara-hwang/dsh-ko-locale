@@ -104,6 +104,10 @@ function setMachineLanguage(tags) {
     configurable: true,
     writable: true,
   })
+  /* The runtime only consults `navigator` when a browser `window` exists; a
+   * windowless Node run is treated as "no browser to ask". Define the marker so
+   * the automatic-Korean scenario below exercises the path the GUI actually takes. */
+  globalThis.window ??= {}
 }
 
 function installPack(localeRuntime) {

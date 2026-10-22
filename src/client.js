@@ -4,16 +4,19 @@
  * Registers Korean as a selectable DSH locale and serves Korean copy for every
  * namespace the shipped client plugins register.
  *
- * Why this patches the locale runtime instead of only calling
- * `ctx.locale.register(ns, 'ko', {...})`:
+ * Why this patches the locale runtime instead of only registering dictionaries:
  *
- *   `LocaleRuntime.register` rejects a namespace/locale pair that is already
- *   registered (`locale namespace "<ns>" already has locale "ko"`), and it has
- *   no replace/merge entry point. A language pack therefore cannot take over a
- *   built-in namespace through the public dictionary API. `lookup` is the one
- *   seam every translation read funnels through (`bind` -> `translate` ->
- *   `lookup`), so overriding it on `LocaleRuntime.prototype` reaches all copy
- *   without touching any package's registration.
+ *   `LocaleRuntime.register` rejects a namespace/locale pair another plugin
+ *   already owns (`locale namespace "<ns>" already has locale "ko"`) and offers
+ *   no replace/merge entry point, so a language pack cannot arbitrate between two
+ *   owners of the same language through the public API. Patching `lookup` also
+ *   serves every translated namespace from one place, whether or not the owning
+ *   package has registered its dictionaries yet.
+ *
+ *   Measured on DSH 0.2.1-rc.2: adding `ko` to a shipped namespace through
+ *   `register` does work, and `addLanguage` alone selects Korean on a Korean
+ *   machine. docs/mechanism-review.md records that measurement and the plan to
+ *   retire this overlay; tools/probe-public-api.mjs re-measures it.
  *
  * The pack only overrides where it has an entry; everything else falls through
  * to the built-in English dictionary unchanged, so a partial pack degrades to

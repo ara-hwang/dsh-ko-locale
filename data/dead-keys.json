@@ -1,0 +1,74 @@
+{
+ "_comment": [
+  "Translations retired because a DSH build stopped shipping their key. tools/merge-delta.mjs",
+  "maintains this file: a returning key reuses its retired translation instead of starting over,",
+  "and the ledger is pruned when that happens. Git history holds the full previous dictionary."
+ ],
+ "retired": {
+  "chat.message.accountStopped": {
+   "en": "Task stopped",
+   "ko": "작업 중지됨",
+   "retiredAt": "0.2.1-rc.2"
+  },
+  "pluginManager.officialTitle": {
+   "en": "Official",
+   "ko": "공식",
+   "retiredAt": "0.2.1-rc.2"
+  },
+  "settings.models.keyEnvLocked": {
+   "en": "Provided by the launch environment (read-only)",
+   "ko": "실행 환경에서 제공됨(읽기 전용)",
+   "retiredAt": "0.2.1-rc.2"
+  },
+  "settings.models.keyPlaceholderNative": {
+   "en": "Enter an API key, or leave blank to use environment authentication",
+   "ko": "API 키를 입력하거나, 환경 인증을 사용하려면 비워 두세요.",
+   "retiredAt": "0.2.1-rc.2"
+  },
+  "settings.models.keyStored": {
+   "en": "Configured — enter a new value to replace",
+   "ko": "구성됨 — 교체하려면 새 값을 입력하세요.",
+   "retiredAt": "0.2.1-rc.2"
+  },
+  "settings.pluginInventory.countUnit": {
+   "en": "plugins",
+   "ko": "개",
+   "retiredAt": "0.2.1-rc.2"
+  },
+  "settings.pluginInventory.failedCountLabel": {
+   "en": "failed",
+   "ko": "개 실패",
+   "retiredAt": "0.2.1-rc.2"
+  },
+  "settings.pluginInventory.viewInPreset": {
+   "en": "View in the preset group",
+   "ko": "프리셋 그룹에서 보기",
+   "retiredAt": "0.2.1-rc.2"
+  },
+  "settings.theme.fontSize.decrease": {
+   "en": "Decrease font size",
+   "ko": "글꼴 크기 줄이기",
+   "retiredAt": "0.2.1-rc.2"
+  },
+  "settings.theme.fontSize.description": {
+   "en": "Only affects conversation content",
+   "ko": "대화 내용에만 적용돼요.",
+   "retiredAt": "0.2.1-rc.2"
+  },
+  "settings.theme.fontSize.increase": {
+   "en": "Increase font size",
+   "ko": "글꼴 크기 늘리기",
+   "retiredAt": "0.2.1-rc.2"
+  },
+  "settings.theme.fontSize.title": {
+   "en": "Font size",
+   "ko": "글꼴 크기",
+   "retiredAt": "0.2.1-rc.2"
+  },
+  "trajectory.details.scheduled": {
+   "en": "Scheduled",
+   "ko": "예약됨",
+   "retiredAt": "0.2.1-rc.2"
+  }
+ }
+}

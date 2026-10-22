@@ -3,9 +3,12 @@
 Korean (한국어) language pack for the DeepSeek Harness desktop and web GUI.
 
 Adds `ko` to the locale catalog and serves Korean copy for **every namespace the
-shipped client plugins register** — 2,412 strings across 56 namespaces, i.e. the
-whole web GUI surface (chat, conversation, trajectory, workspace, sidebar,
-settings, plugins, jobs, subagents, deliverables, schedules, voice input, …).
+shipped client plugins register** — 2,699 strings across 60 namespaces of DeepSeek
+Harness 0.2.1-rc.2, i.e. the whole web GUI surface (chat, conversation, trajectory,
+workspace, sidebar, settings, plugins and the plugin market, session inspector,
+jobs, subagents, deliverables, schedules, voice input, …). The one namespace left
+in English is a one-string model badge; [`data/scope.json`](data/scope.json)
+records why.
 
 ## What you get
 
@@ -95,32 +98,17 @@ for (const [locale] of pairs) if (locales.has(localeKey(locale)))
   throw new Error(`locale namespace "${ns}" already has locale "${locale}"`)
 ```
 
-Every namespace this pack translates is *already* registered by its owning
-package for `zh` and `en`, and there is no replace or merge entry point. A
-language pack therefore cannot take a built-in namespace over through the public
-dictionary API. `lookup` is the single seam every translation read funnels
-through (`bind` → `translate` → `lookup`), so overriding it reaches all copy —
-including slot-rendered text — without modifying any package.
+That blocks a *takeover* — two plugins cannot both own `ko` for one namespace, and
+there is no replace or merge entry point. It does not block adding `ko` to a
+namespace that already ships `zh` and `en`: on 0.2.1-rc.2 that public path works.
+[`docs/mechanism-review.md`](docs/mechanism-review.md) records the measurement and
+why this release still keeps the overlay. What the overlay provides today:
 
-Two consequences are handled explicitly:
-
-- **`register` is wrapped too.** A namespace some *other* plugin localizes into
-  Korean is recorded and this pack steps aside for it, so a plugin that ships
-  its own `ko` dictionary wins over the overlay.
-- **`publish` invalidates a memo** of the active locale, so switching languages
-  is picked up immediately.
-
-### Autonomous start-up
-
-`LocaleRuntime` derives the provisional locale in its constructor, before any
-language pack can register, and `addLanguage` publishes through
-`publishCatalog` → `localeList` → `resolveActive`, which read the *previous*
-snapshot. Both are therefore adjusted:
-
-- `localeList` reports the catalog so a language being added is never dropped
-  from the list it is being added to.
-- `resolveActive` re-decides the provisional locale while nothing is stored, so
-  a Korean machine opens in Korean rather than English.
+- **One owner for every translated namespace** — `lookup` serves the pack's entries
+  whether or not the owning package has registered its dictionaries yet.
+- **A plugin that localizes into Korean wins** — a namespace some *other* plugin
+  registers `ko` for is recorded, and this pack steps aside for it.
+- **Immediate language switching** — `publish` invalidates the active-locale memo.
 
 Everything the pack touches is restored by its disposer; disabling the plugin
 returns the runtime to its original behaviour (verified in `tools/smoke-test.mjs`).
@@ -131,6 +119,10 @@ returns the runtime to its original behaviour (verified in `tools/smoke-test.mjs
 |---|---|
 | `src/` | The plugin: `client.js` is the browser half, `index.js` the host mount point |
 | `data/` | `ko.json` (shipped Korean), `en.json`/`zh.json` (audit baseline), `overrides.json` (reviewed corrections) |
+| `data/source.json` | The DSH build the dictionaries were extracted from; written by `npm run pin` |
+| `data/glossary.ko.json` | Approved Korean terminology; `tools/check-glossary.mjs` lints the pack against it |
+| `data/scope.json` | Entries the pack skips by decision, each with its reason |
+| `data/dead-keys.json` | Translations retired when a build dropped their key; reused if the key returns |
 | `lib/` | **Generated** by `node tools/build.mjs` — the installed artifact |
 | `tools/` | The extraction, translation, build and verification pipeline |
 | `cordis.patch.yml` | Bundle layer: the one loader row this package inserts |
@@ -145,11 +137,16 @@ node tools/smoke-test.mjs
 ```
 
 Reads the **real** `LocaleRuntime` straight out of the installed application's
-`app.asar` and asserts 28 behaviours: catalog registration, Korean activation on
-a Korean machine, explicit selection, per-key English fallback, disposal
-restoring the runtime, and data integrity (no blank values, no empty namespace,
-placeholder tokens identical to the English source). `DSH_ASAR` points it at a
-different install.
+`app.asar` and asserts 22 behaviours: catalog registration, Korean activation on
+a Korean machine through the browser path, explicit selection, per-key English
+fallback, and disposal restoring the runtime. `DSH_ASAR` points it at a different
+install.
+
+`npm run check` is the portable half — dictionary shape, committed build equality,
+coverage against the pinned baseline, and the glossary — and is what CI and
+`prepublishOnly` run. `npm run drift` compares the installed build with the shipped
+baseline and exits non-zero while the pack is behind; `npm run probe:api`
+re-measures the public locale API seam ([docs/mechanism-review.md](docs/mechanism-review.md)).
 
 To confirm the running Host really composed and serves the pack — and that the
 page's loader will find it under the id the bundle registers — ask the live web
@@ -166,11 +163,23 @@ dependency → bundle patch → loader row → boot graph → served bundle.
 ## Topping up after a DSH upgrade
 
 A DSH upgrade can add or reword English strings. Anything the pack lacks falls
-back to English, so the pack never breaks — it just becomes incomplete.
-[`docs/regenerating.md`](docs/regenerating.md) is the sequence that closes the
-gap: extract, chunk, translate, verify, merge, audit, build, publish. It prints
-coverage at the merge step, so a partial translation is visible before anything
-ships.
+back to English, so the pack never breaks — it just becomes incomplete. The
+routine update translates only the delta and keeps every reviewed line:
+
+```bash
+npm run pin      # record the installed build in data/source.json
+npm run extract  # read the shipped dictionaries out of app.asar
+npm run drift    # added / changed / removed; exits non-zero until closed
+# translate ../_work/delta/<namespace>.json with data/glossary.ko.json in hand
+npm run merge    # splice the delta onto the reviewed dictionary
+npm run verify && npm run assemble && npm run build && npm run check && npm test
+```
+
+`drift` names the work; `merge` refuses to carry old Korean for a reworded English
+string; `data/dead-keys.json` keeps a translation whose key disappeared so a later
+build can reuse it. [`docs/regenerating.md`](docs/regenerating.md) documents the
+sequence, including the full regeneration used only for the first pack or a
+mechanism change.
 
 ## Releasing
 
@@ -205,7 +214,7 @@ install it immediately.
 dictionary check, which is the strongest gate available without the DSH
 application. `npm test` additionally drives the real `LocaleRuntime`. The
 tarball carries only `LICENSE`, `README.md`, `cordis.patch.yml` and the
-generated `lib/` files — seven files, ~84 kB packed — because that is everything
+generated `lib/` files — seven files, ~95 kB packed — because that is everything
 a profile needs to resolve and serve the plugin; `src/`, `data/`, `docs/`,
 `tools/` and the workflows stay in the repository. Those generated files are
 committed rather than built at install time, for the reason
@@ -217,7 +226,16 @@ committed rather than built at install time, for the reason
   names (`lookup`, `register`, `localeList`, `resolveActive`, `publish`). A DSH
   release that renames them disables the pack with a console error rather than
   corrupting anything — the pack logs
-  `dsh-ko-locale: unrecognized locale runtime` and does nothing.
+  `dsh-ko-locale: unrecognized locale runtime` and does nothing. `npm run probe:api`
+  measures which parts the public API already covers; the next release moves the
+  pack onto it ([docs/mechanism-review.md](docs/mechanism-review.md)).
+- **One namespace is out of scope by decision.** `deepseek-model-label-1017` holds a
+  single model badge in a namespace stamped per model release. It stays English and
+  [`data/scope.json`](data/scope.json) records why; a future build ships a
+  differently named namespace and `drift` reports it.
+- **The plugin market's content is not UI copy.** The Discover page is translated,
+  but each listed plugin's title, description and readme come from its own
+  manifest/registry, so those stay in whatever language the publisher wrote.
 - **No plural rules.** Like the shipped locales, the pack is a flat dictionary;
   Korean plurals are handled by phrasing, not by the locale registry.
 - **Host-side copy is out of scope.** Some strings live in the Node half (tool
@@ -238,7 +256,8 @@ committed rather than built at install time, for the reason
 MIT — see [LICENSE](LICENSE).
 
 The Korean strings were produced against the English and Chinese dictionaries
-that ship inside the DeepSeek Harness desktop application. Those dictionaries
+that ship inside the DeepSeek Harness desktop application (0.2.1-rc.2 at this
+release). Those dictionaries
 remain the property of their authors; this repository carries only the derived
 Korean translation, the overlay that serves it, and the tooling that regenerates
 it.

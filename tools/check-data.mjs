@@ -16,6 +16,8 @@
  *   3. No namespace is empty and no value is blank.
  *   4. Every key in `data/en.json` is present, and every `{token}` placeholder
  *      survives into the Korean text.
+ *   5. Every scope exemption in `data/scope.json` still names a shipped entry —
+ *      an exemption that outlives its target would hide a future gap.
  *
  * Usage: node tools/check-data.mjs
  * @returns exit code 1 when any check fails.
@@ -29,6 +31,28 @@ const pkgRoot = path.resolve(here, '..')
 
 /** This package's own name, which its bundle must register itself under. */
 const PACKAGE_ID = 'dsh-ko-locale'
+
+/**
+ * Read the scope exemptions that let the pack skip an entry by decision.
+ * @param root - package root.
+ * @returns `{ namespaces, keys, pairs }`: `keys` holds `ns.key`, `pairs` the split form.
+ */
+function readScope(root) {
+  const file = path.join(root, 'data', 'scope.json')
+  const namespaces = new Set()
+  const keys = new Set()
+  const pairs = []
+  if (!fs.existsSync(file)) return { namespaces, keys, pairs }
+  const scope = JSON.parse(fs.readFileSync(file, 'utf8'))
+  for (const ns of Object.keys(scope.excludedNamespaces ?? {})) namespaces.add(ns)
+  for (const [ns, entries] of Object.entries(scope.excludedKeys ?? {})) {
+    for (const key of entries) {
+      keys.add(`${ns}.${key}`)
+      pairs.push([ns, key])
+    }
+  }
+  return { namespaces, keys, pairs }
+}
 
 /**
  * Execute a module-loader bundle as a classic script, exactly like the app's
@@ -113,26 +137,44 @@ export function checkData(root = pkgRoot) {
     }
   }
 
-  /* 3. Shape. */
+  /* 3. Shape. A value's blankness is judged in step 4, where the English source
+   * is at hand: a whitespace-only separator is a real string, not a gap. */
   for (const ns of namespaces) {
     const entries = Object.entries(dictionaries[ns])
     keys += entries.length
     if (entries.length === 0) fail(`namespace "${ns}" is empty`)
     for (const [key, value] of entries) {
-      if (typeof value !== 'string' || value.trim() === '') fail(`"${ns}.${key}" is blank`)
+      if (typeof value !== 'string') fail(`"${ns}.${key}" is not a string`)
     }
   }
   if (namespaces.length === 0) fail('the pack carries no namespaces')
 
-  /* 4. Coverage and placeholder parity against the English source. */
+  /* 4. Coverage and placeholder parity against the English source, minus scope. */
   const en = JSON.parse(fs.readFileSync(path.join(root, 'data', 'en.json'), 'utf8'))
+  const scope = readScope(root)
   let expected = 0
+  let excluded = 0
   for (const [ns, entries] of Object.entries(en)) {
+    if (scope.namespaces.has(ns)) {
+      excluded += Object.keys(entries).length
+      if (ns in dictionaries) {
+        fail(`"${ns}" is excluded by data/scope.json but the pack still carries Korean for it`)
+      }
+      continue
+    }
     for (const [key, english] of Object.entries(entries)) {
+      if (scope.keys.has(`${ns}.${key}`)) {
+        excluded++
+        continue
+      }
       expected++
       const korean = dictionaries[ns]?.[key]
       if (typeof korean !== 'string') {
         fail(`"${ns}.${key}" has no Korean`)
+        continue
+      }
+      if (korean.trim() === '' && english.trim() !== '') {
+        fail(`"${ns}.${key}" is blank`)
         continue
       }
       if (placeholders(english) !== placeholders(korean)) {
@@ -141,9 +183,34 @@ export function checkData(root = pkgRoot) {
     }
   }
 
+  /* 5. An exemption that no longer names a shipped entry would hide a future gap. */
+  for (const ns of scope.namespaces) {
+    if (!(ns in en)) fail(`data/scope.json excludes "${ns}", which data/en.json no longer ships`)
+  }
+  for (const [ns, key] of scope.pairs) {
+    if (en[ns]?.[key] === undefined) {
+      fail(`data/scope.json excludes "${ns}.${key}", which data/en.json no longer ships`)
+    }
+  }
+
+  /* 6. The committed baseline must be the build data/source.json pins. */
+  const sourceFile = path.join(root, 'data', 'source.json')
+  if (fs.existsSync(sourceFile)) {
+    const pin = JSON.parse(fs.readFileSync(sourceFile, 'utf8')).target ?? {}
+    const totalKeys = expected + excluded
+    if (pin.englishKeys !== undefined && pin.englishKeys !== totalKeys) {
+      fail(`data/en.json carries ${totalKeys} English keys but data/source.json pins ${pin.englishKeys}`)
+    }
+    if (pin.namespaces !== undefined && pin.namespaces !== Object.keys(en).length) {
+      fail(
+        `data/en.json carries ${Object.keys(en).length} namespaces but data/source.json pins ${pin.namespaces}`,
+      )
+    }
+  }
+
   return {
     failures,
-    summary: { namespaces: namespaces.length, keys, expected },
+    summary: { namespaces: namespaces.length, keys, expected, excluded },
   }
 }
 
@@ -151,7 +218,8 @@ if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLTo
   const { failures, summary } = checkData()
   if (summary !== undefined) {
     console.log(
-      `pack: ${summary.namespaces} namespaces, ${summary.keys} Korean strings, ${summary.expected} English keys`,
+      `pack: ${summary.namespaces} namespaces, ${summary.keys} Korean strings, ${summary.expected} English keys` +
+        (summary.excluded > 0 ? `, ${summary.excluded} excluded by data/scope.json` : ''),
     )
   }
   for (const failure of failures.slice(0, 40)) console.log(`FAIL  ${failure}`)

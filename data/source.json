@@ -1,0 +1,23 @@
+{
+ "_comment": [
+  "The DSH build this pack was extracted from. tools/pin-source.mjs writes it; nothing else should.",
+  "tools/drift.mjs measures the next build against data/en.json, and every coverage claim in the",
+  "README is a statement about the pair (pack version in package.json, target.dshVersion here)."
+ ],
+ "target": {
+  "distro": "desktop",
+  "dshVersion": "0.2.1-rc.2",
+  "channel": "nightly",
+  "asarSha256": "47874618bf5b3011fcaac10cd4c85f69da333e70d4f99b921207c78d0999512a",
+  "clientBundles": 75,
+  "namespaces": 61,
+  "englishKeys": 2700
+ },
+ "feed": {
+  "url": "https://download.deepseek.com/dsh-desk/feeds/win-x64/nightly.yml",
+  "version": "0.2.1-rc.2",
+  "sha512": "39POl5osl9PKMqrPXQA52dh/bCV0Z02vOV9cTjOJDHE6gsJwp5bv7lfgB3mVWAKspX7a/w1iTi+8Listdhq45g==",
+  "releaseDate": "2026-10-17T09:22:23.750Z"
+ },
+ "extractedAt": "2026-10-22T05:40:11.816Z"
+}

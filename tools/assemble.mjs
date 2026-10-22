@@ -53,6 +53,16 @@ const ko = {}
 const missing = []
 const extra = []
 let translated = 0
+let excluded = 0
+
+/* Decisions to skip an entry live in data/scope.json, not in a comment here. */
+const scopeFile = path.join(pkgRoot, 'data', 'scope.json')
+const scope = fs.existsSync(scopeFile) ? readJson(scopeFile) : { excludedNamespaces: {}, excludedKeys: {} }
+const excludedNamespaces = new Set(Object.keys(scope.excludedNamespaces ?? {}))
+const excludedKeys = new Set()
+for (const [ns, keys] of Object.entries(scope.excludedKeys ?? {})) {
+  for (const key of keys) excludedKeys.add(`${ns}.${key}`)
+}
 
 for (const ns of [...source.keys()].sort()) {
   const { en: enDict, zh: zhDict } = source.get(ns)
@@ -63,7 +73,15 @@ for (const ns of [...source.keys()].sort()) {
   for (const key of Object.keys(enDict)) {
     en[ns][key] = enDict[key]
     if (key in zhDict) zh[ns][key] = zhDict[key]
-    if (typeof koDict[key] === 'string' && koDict[key] !== '') {
+    if (excludedNamespaces.has(ns) || excludedKeys.has(`${ns}.${key}`)) {
+      excluded++
+      continue
+    }
+    /* Presence, not non-emptiness, marks a key translated: English itself ships
+     * empty values (a join prefix that only some languages need), and an empty
+     * Korean value is a real decision. Blankness is judged against the source in
+     * tools/check-data.mjs and tools/verify-translations.mjs. */
+    if (typeof koDict[key] === 'string') {
       ko[ns][key] = koDict[key]
       translated++
     } else {
@@ -71,6 +89,9 @@ for (const ns of [...source.keys()].sort()) {
     }
   }
   for (const key of Object.keys(koDict)) if (!(key in enDict)) extra.push(`${ns}.${key}`)
+  /* The shipped dictionary carries no empty namespace: the build would drop it
+   * anyway, and the committed data file should say what the bundle says. */
+  if (Object.keys(ko[ns]).length === 0) delete ko[ns]
 }
 
 for (const ns of korean.keys()) {
@@ -104,9 +125,11 @@ write('en.json', en)
 write('zh.json', zh)
 write('ko.json', ko)
 
-const total = translated + missing.length
+const total = translated + missing.length + excluded
 console.log(`namespaces: ${Object.keys(ko).length}`)
-console.log(`keys: ${total} total, ${translated} Korean (${((translated / total) * 100).toFixed(1)}%), ${missing.length} missing`)
+console.log(
+  `keys: ${total} total, ${translated} Korean (${((translated / (total - excluded)) * 100).toFixed(1)}% of covered keys), ${missing.length} missing, ${excluded} excluded by data/scope.json`,
+)
 console.log(`reviewed overrides applied: ${applied}`)
 if (missing.length) {
   console.log(`\nmissing (${missing.length}):`)

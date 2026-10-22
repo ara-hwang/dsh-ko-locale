@@ -19,6 +19,19 @@ const pkgRoot = path.resolve(here, '..')
 const chunksDir = process.argv[2] ?? path.resolve(pkgRoot, '..', '_work', 'chunks')
 const koDir = process.argv[3] ?? path.resolve(pkgRoot, '..', '_work', 'ko')
 
+/* Decisions to skip an entry live in data/scope.json; a skipped key has no
+ * translation on purpose and must not be reported as missing. */
+const scopeFile = path.join(pkgRoot, 'data', 'scope.json')
+const scope = fs.existsSync(scopeFile)
+  ? JSON.parse(fs.readFileSync(scopeFile, 'utf8'))
+  : { excludedNamespaces: {}, excludedKeys: {} }
+const excludedNamespaces = new Set(Object.keys(scope.excludedNamespaces ?? {}))
+const excludedKeys = new Set()
+for (const [ns, keys] of Object.entries(scope.excludedKeys ?? {})) {
+  for (const key of keys) excludedKeys.add(`${ns}\u0000${key}`)
+}
+const isExcluded = (ns, key) => excludedNamespaces.has(ns) || excludedKeys.has(`${ns}\u0000${key}`)
+
 const manifest = JSON.parse(fs.readFileSync(path.join(chunksDir, '_manifest.json'), 'utf8'))
 
 /**
@@ -82,12 +95,13 @@ for (const chunk of manifest) {
       continue
     }
     for (const [key, english] of Object.entries(group.en)) {
+      if (isExcluded(group.ns, key)) continue
       const value = korean[key]
       if (!(key in korean)) {
         missing++
         chunkMissing++
         if (problems.length < 40) problems.push(`chunk ${chunk.id} ${group.ns}: missing "${key}"`)
-      } else if (typeof value !== 'string' || value.trim() === '') {
+      } else if (typeof value !== 'string' || (value.trim() === '' && english.trim() !== '')) {
         blank++
         problems.push(`chunk ${chunk.id} ${group.ns}: blank "${key}"`)
       } else {
