@@ -49,9 +49,10 @@ Use the extracted call site to judge the role (label, button, error, tooltip, ar
 label), the Chinese dictionary as a semantic anchor, and
 [`data/glossary.ko.json`](../data/glossary.ko.json) for terminology. Write in
 합니다체: declaratives end `…합니다`/`…입니다`, requests `…하십시오`/`…해 주십시오`,
-confirmations `…하시겠습니까?`. Keep every `{token}` verbatim; keep product names,
-commands, paths, units and acronyms in English; keep the source's trailing period
-and surrounding spaces.
+confirmations `…하시겠습니까?`. A complete sentence ends with a period even where the
+English source omits it; titles, headings and input placeholders keep no period.
+Keep every `{token}` verbatim; keep product names, commands, paths, units and
+acronyms in English; preserve surrounding spaces.
 **Done when** every added and reworded key has a Korean value.
 
 ## 4. Splice, verify, assemble

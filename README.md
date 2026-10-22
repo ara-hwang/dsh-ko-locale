@@ -21,7 +21,8 @@ records why.
   added by a DSH update, or a plugin you installed afterwards) falls back to the
   shipped English dictionary rather than showing a raw key name.
 - **Formal register throughout.** Every translated sentence uses 합니다체 —
-  `…합니다`, `…입니다`, `…하십시오`, `…하시겠습니까?` — so the GUI reads as one voice
+  `…합니다`, `…입니다`, `…하십시오`, `…하시겠습니까?` — and complete sentences end with a
+  period even where the English source omits it, so the GUI reads as one voice
   rather than a mix of styles.
 
 ## Install
